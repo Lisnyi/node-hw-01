@@ -3,12 +3,21 @@ const path = require("path")
 
 const contactsPath = path.resolve('./db/contacts.json')
 
+async function getContactsArray (path) {
+  try {
+    const contacts = await fs.readFile(path, 'utf-8')
+    const contactsArray = JSON.parse(contacts)
+    return contactsArray
+  } catch (e) {
+      console.log(e)
+  }
+}
+
 async function listContacts() {
     try {
-        const contacts = await fs.readFile(contactsPath, 'utf-8')
-        const contactsArr = JSON.parse(contacts)
-        console.table(contactsArr)
-        return contactsArr
+        const contacts = await getContactsArray(contactsPath)
+        console.table(contacts)
+        return contacts
     } catch (e) {
         console.log(e)
     }
@@ -16,9 +25,8 @@ async function listContacts() {
   
   async function getContactById(contactId) {
     try {
-        const contacts = await fs.readFile(contactsPath, 'utf-8')
-        const contactsArr = JSON.parse(contacts)
-        const result = contactsArr.find(({id}) => id === contactId)
+        const contacts = await getContactsArray(contactsPath)
+        const result = contacts.find(({id}) => id === contactId)
         console.log(result)
         return result
     } catch (e) {
@@ -26,17 +34,30 @@ async function listContacts() {
     }
   }
   
-  function removeContact(contactId) {
+  async function removeContact(contactId) {
     try {
-
+      const contacts = await getContactsArray(contactsPath)
+      const result = contacts.filter(({id}) => id !== contactId)
+      await fs.writeFile(contactsPath, JSON.stringify(result), 'utf-8')
+      console.table(result)
+      return result
     } catch (e) {
         console.log(e)
     }
   }
   
-  function addContact(name, email, phone) {
+  async function addContact(name, email, phone) {
     try {
-
+      const contacts = await getContactsArray(contactsPath)
+      const lastId = Number(contacts[contacts.length-1].id)
+      const newContact = {id: (lastId+1).toString(),
+                          name,
+                          email,
+                          phone}
+      contacts.push(newContact)
+      await fs.writeFile(contactsPath, JSON.stringify(contacts), 'utf-8')
+      console.table(contacts)
+      return contacts
     } catch (e) {
         console.log(e)
     }
